@@ -1,0 +1,118 @@
+/*
+ *   cmd_brturbohelpers - /HELPERS Comando que lista os helpers da rede
+ *   (C) Copyright 2025 BrTurbo <admin@brturbo.net>
+ *   Este programa é software livre; você pode redistribuir e/ou modificar
+ *   sob os termos da Licença Pública Geral GNU, conforme publicada pela
+ *   Free Software Foundation; ou a versão 2 da Licença, ou (a sua escolha)
+ *   qualquer versão posterior.
+ */
+
+#include <inspircd.h>
+#include <string>
+#include <sstream>
+#include <iomanip>
+
+class CommandHelpers : public Command
+{
+ private:
+	bool IsService(User* user)
+	{
+		return user->IsModeSet('S');
+	}
+
+	std::string GetHelperClass(User* user)
+	{
+		if (user->IsModeSet('H')) // Helper
+			return "Helper";
+		else if (user->IsModeSet('h')) // Ajudante
+			return "Ajudante";
+		else if (user->IsModeSet('s')) // Staff
+			return "Membro da Equipe";
+		else if (user->IsModeSet('v')) // Voluntário
+			return "Voluntário";
+		else
+			return "Desconhecido";
+	}
+
+ public:
+	CommandHelpers(Module* parent) : Command(parent, "HELPERS", 0, 0)
+	{
+		syntax = "";
+	}
+
+	CmdResult Handle(User* user, const Params& parameters) CXX11_OVERRIDE
+	{
+		// Cabeçalho com espaços adicionais
+		user->WriteNotice("========================================================================================");
+		user->WriteNotice("");  // Linha em branco antes do cabeçalho
+		std::string header = InspIRCd::Format("%-15s %-20s", "Nick", "Status");
+		user->WriteNotice(header);
+		user->WriteNotice("----------------------------------------------------------------------------------------");
+		user->WriteNotice("");  // Linha em branco após o cabeçalho
+
+		// Contadores
+		int total_helpers = 0;
+		int total_away = 0;
+		int total_busy = 0;
+
+		// Definir o nome do canal de suporte
+		const std::string helpchan = "#Suporte";
+
+		// Lista de helpers
+		const user_hash& users = ServerInstance->Users.GetUsers();
+		for (user_hash::const_iterator i = users.begin(); i != users.end(); ++i)
+		{
+			User* u = i->second;
+			
+			// Verifica se o usuário está no canal #Suporte
+			Channel* suporte_chan = ServerInstance->FindChan(helpchan);
+			if (!suporte_chan || !suporte_chan->HasUser(u))
+				continue;
+
+			// Verifica se o usuário tem algum dos modos de canal no #Suporte
+			unsigned int prefix = suporte_chan->GetPrefixValue(u);
+			if (prefix == 0)
+				continue;
+
+			if (u->server->IsULine() || u->IsModeSet('S'))
+				continue;
+
+			total_helpers++;
+			if (u->IsModeSet('a'))
+				total_away++;
+			if (u->IsModeSet('b'))
+				total_busy++;
+
+			std::string line = InspIRCd::Format("%-15s %-20s", 
+				u->nick.c_str(),
+				GetHelperClass(u).c_str());
+			user->WriteNotice(line);
+		}
+
+		user->WriteNotice("");  // Linha em branco antes do total
+		// Rodapé
+		user->WriteNotice(InspIRCd::Format("Total: %d Helpers | Ausentes: %d | Ocupados: %d", total_helpers, total_away, total_busy));
+		user->WriteNotice("========================================================================================");
+
+		return CMD_SUCCESS;
+	}
+};
+
+class ModuleBrTurboHelpers : public Module
+{
+ private:
+	CommandHelpers cmd;
+
+ public:
+	ModuleBrTurboHelpers()
+		: cmd(this)
+	{
+	}
+
+	Version GetVersion() CXX11_OVERRIDE
+	{
+		return Version("Comando HELPERS para listar helpers da rede", VF_VENDOR);
+	}
+};
+
+MODULE_INIT(ModuleBrTurboHelpers) 
