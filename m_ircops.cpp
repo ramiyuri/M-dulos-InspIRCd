@@ -4,7 +4,7 @@
  *   (C) Copyright 2000-2005 Lamego <lamego@ptlink.net>
  *   Adaptado para InspIRCd por: 
  *   WebChat <webchat@brturbo.net>
- *   IceCube <icecube@brturbo.net>
+ *   IceCube <icecube@brturbo.net> 
  *   Este programa é software livre; você pode redistribuir e/ou modificar
  *   sob os termos da Licença Pública Geral GNU, conforme publicada pela
  *   Free Software Foundation; ou a versão 2 da Licença, ou (a sua escolha)
