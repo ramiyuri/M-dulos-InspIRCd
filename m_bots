@@ -1,0 +1,67 @@
+/*
+ *   cmd_bots - /BOTS Comando que lista os Bots da rede
+ *   (C) Copyright 2000-2005 openglx <openglx@brasnerd.com.br>
+ *   (C) Copyright 2000-2005 Lamego <lamego@ptlink.net>
+ *   Adaptado para InspIRCd por: 
+ *   WebChat <webchat@brturbo.net>
+ *   IceCube <icecube@brturbo.net>
+ *   Este programa é software livre; você pode redistribuir e/ou modificar
+ *   sob os termos da Licença Pública Geral GNU, conforme publicada pela
+ *   Free Software Foundation; ou a versão 2 da Licença, ou (a sua escolha)
+ *   qualquer versão posterior.
+ */
+#include <inspircd.h>
+#include <string>
+#include <iomanip>
+
+class CommandBots : public Command
+{
+ public:
+	CommandBots(Module* parent) : Command(parent, "BOTS", 0, 0)
+	{
+		syntax = "";
+	}
+
+	CmdResult Handle(User* user, const Params& parameters) CXX11_OVERRIDE
+	{
+		user->WriteNotice("========================================================================================");
+		user->WriteNotice("");
+		std::string header = InspIRCd::Format("%-15s %s", "Nick", "Servidor");
+		user->WriteNotice(header);
+		user->WriteNotice("----------------------------------------------------------------------------------------");
+		user->WriteNotice("");
+
+		int total_bots = 0;
+		const user_hash& users = ServerInstance->Users.GetUsers();
+		for (user_hash::const_iterator i = users.begin(); i != users.end(); ++i)
+		{
+			User* u = i->second;
+			if (!u->IsModeSet('B') || u->server->IsULine() || u->IsModeSet('S'))
+				continue;
+			total_bots++;
+			std::string line = InspIRCd::Format("%-15s %s", u->nick.c_str(), u->server->GetName().c_str());
+			user->WriteNotice(line);
+		}
+
+		user->WriteNotice("");
+		user->WriteNotice(InspIRCd::Format("Total: %d bots conectados", total_bots));
+		user->WriteNotice("========================================================================================");
+		return CMD_SUCCESS;
+	}
+};
+
+class ModuleBots : public Module
+{
+ private:
+	CommandBots cmd;
+
+ public:
+	ModuleBots() : cmd(this) {}
+
+	Version GetVersion() CXX11_OVERRIDE
+	{
+		return Version("Comando BOTS para listar bots da rede", VF_VENDOR);
+	}
+};
+
+MODULE_INIT(ModuleBots) 
